@@ -9,8 +9,13 @@ Written by Waleed Abdulla
 
 import math
 import numpy as np
+import tensorflow as tf
 
-
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    for gpu in gpus:
+        tf.config.experimental.set_memory_growth(gpu, True)
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!GPU memory growth set to True for GPU: ", gpu)
 # Base Configuration Class
 # Don't use this class directly. Instead, sub-class it and override
 # the configurations you need to change.
@@ -231,3 +236,47 @@ class Config(object):
             if not a.startswith("__") and not callable(getattr(self, a)):
                 print("{:30} {}".format(a, getattr(self, a)))
         print("\n")
+
+
+# class MinimalConfig(Config):
+#     # Give the experiment a name
+#     NAME = "minimal"
+
+#     # Use one GPU and one image per GPU to reduce load.
+#     GPU_COUNT = 1
+#     IMAGES_PER_GPU = 1
+
+#     # Since this is minimal training, we use just the background class.
+#     NUM_CLASSES = 1  # Background only; update as needed.
+
+#     # Use the smallest acceptable image size.
+#     IMAGE_RESIZE_MODE = "square"
+#     IMAGE_MIN_DIM = 128   # Lower resolution (must be divisible by 64; 128 = 2 x 64)
+#     IMAGE_MAX_DIM = 128
+#     IMAGE_MIN_SCALE = 0
+
+#     # Use minimal anchor scales for RPN.
+#     RPN_ANCHOR_SCALES = (16, 32, 64, 128, 256)
+#     RPN_ANCHOR_RATIOS = [0.5, 1, 2]
+#     RPN_ANCHOR_STRIDE = 1
+
+#     # Lower the number of ROIs per image.
+#     TRAIN_ROIS_PER_IMAGE = 16
+
+#     BACKBONE = "resnet18"  # or "resnet18" if you implement a lighter custom backbone
+
+#     # Minimal training epochs/steps.
+#     STEPS_PER_EPOCH = 10
+#     VALIDATION_STEPS = 5
+
+#     # Reduce the number of proposals to process.
+#     POST_NMS_ROIS_TRAINING = 10
+#     POST_NMS_ROIS_INFERENCE = 5
+
+#     # Minimal learning parameters.
+#     LEARNING_RATE = 0.01
+#     LEARNING_MOMENTUM = 0.9
+#     WEIGHT_DECAY = 0.0001
+
+#     # Optionally, disable object zoom to save extra processing.
+#     USE_OBJECT_ZOOM = False

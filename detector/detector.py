@@ -9,19 +9,19 @@ Licensed under the MIT License
 Written by Waleed Abdulla
 
 ------------------------------------------------------------
-
+pip install git+https://github.com/philferriere/cocoapi.git#subdirectory=PythonAPI
 Usage:
 
     # First make sure you have split the dataset into train/val/test set. e.g. You should have annotations_0_train.json
     # in your dataset dir.
     # Otherwise, You can do this by calling
-    python3 split_dataset.py --dataset_dir ../data
+    python split_dataset.py --dataset_dir ../data
 
     # Train a new model starting from pre-trained COCO weights on train set split #0
-    python3 -W ignore detector.py train --model=coco --dataset=../data --class_map=./taco_config/map_10.csv --round 0
+    python -W ignore detector.py train --model=coco --dataset=../data --class_map=./taco_config/map_10.csv --round 0
 
     # Continue training a model that you had trained earlier
-    python3 -W ignore detector.py train  --dataset=../data --model=<model_name> --class_map=./taco_config/map_10.csv --round 0
+    python -W ignore detector.py train  --dataset=../data --model=<model_name> --class_map=./taco_config/map_10.csv --round 0
 
     # Continue training the last model you trained with image augmentation
     python3 detector.py train --dataset=../data --model=last --round 0 --class_map=./taco_config/map_10.csv --use_aug

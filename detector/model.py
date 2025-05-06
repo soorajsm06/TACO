@@ -27,10 +27,72 @@ import tensorflow as tf
 import keras
 import keras.backend as K
 import keras.layers as KL
-import keras.engine as KE
+from keras.layers import Layer
 import keras.models as KM
+import keras.engine as KE
 import utils
+import keras.engine.topology as KT
+import tensorflow as tf
 
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    for gpu in gpus:
+        tf.config.experimental.set_memory_growth(gpu, True)
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!GPU memory growth set to True for GPU: ", gpu)
+
+try:
+    from keras.engine import saving
+    original_load_by_name = saving.load_weights_from_hdf5_group_by_name
+
+    class FakeAttrs:
+        def __init__(self, real_attrs):
+            self.real_attrs = real_attrs
+        def __getitem__(self, key):
+            if not isinstance(key, str):
+                key = str(key)
+            try:
+                val = self.real_attrs[key]
+            except KeyError:
+                raise KeyError("Can't locate attribute: '{}'".format(key))
+            if key in ('keras_version', 'backend') and not isinstance(val, bytes):
+                return val.encode('utf8')
+            return val
+        def get(self, key, default=None):
+            try:
+                return self.__getitem__(key)
+            except KeyError:
+                return default
+        def __contains__(self, key):
+            if not isinstance(key, str):
+                key = str(key)
+            return key in self.real_attrs
+        def keys(self):
+            return self.real_attrs.keys()
+        def __iter__(self):
+            return iter(self.real_attrs)
+
+    class FakeFile:
+        def __init__(self, f):
+            self.f = f
+        @property
+        def attrs(self):
+            return FakeAttrs(self.f.attrs)
+        def __getattr__(self, name):
+            return getattr(self.f, name)
+        def __getitem__(self, key):
+            return self.f[key]
+
+    def patched_load_weights_from_hdf5_group_by_name(f, layers):
+        keras_version = f.attrs.get('keras_version')
+        if keras_version is not None and not isinstance(keras_version, bytes):
+            f = FakeFile(f)
+        return original_load_by_name(f, layers)
+
+    saving.load_weights_from_hdf5_group_by_name = patched_load_weights_from_hdf5_group_by_name
+    load_weights_from_hdf5_group_by_name = saving.load_weights_from_hdf5_group_by_name
+except ImportError:
+    import keras.engine.topology as KT
+    load_weights_from_hdf5_group_by_name = KT.load_weights_from_hdf5_group_by_name
 # Requires TensorFlow 1.3+ and Keras 2.0.8+.
 from distutils.version import LooseVersion
 assert LooseVersion(tf.__version__) >= LooseVersion("1.3")
@@ -255,7 +317,7 @@ def clip_boxes_graph(boxes, window):
     return clipped
 
 
-class ProposalLayer(KE.Layer):
+class ProposalLayer(Layer):
     """Receives anchor scores and selects a subset to pass as proposals
     to the second stage. Filtering is done based on anchor scores and
     non-max suppression to remove overlaps. It also applies bounding
@@ -2232,7 +2294,7 @@ class MaskRCNN():
             layers = filter(lambda l: l.name not in exclude, layers)
 
         if by_name:
-            topology.load_weights_from_hdf5_group_by_name(f, layers)
+            load_weights_from_hdf5_group_by_name(f, layers)
         else:
             topology.load_weights_from_hdf5_group(f, layers)
         if hasattr(f, 'close'):
