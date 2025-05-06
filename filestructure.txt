@@ -28434,7 +28434,6 @@
     |-- inspect_data.ipynb
     |-- model.py
     |-- models
-        |-- mask_rcnn_coco.h5
     |-- requirements.txt
     |-- split_dataset.py
     |-- taco_config
