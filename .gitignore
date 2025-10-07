@@ -1,3 +1,5 @@
 data/batch_*
 detector/.venvf
 detector/__pycache__
+data
+detector/models/mask_rcnn_coco.h5
